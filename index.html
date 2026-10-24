@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sorteo Robótica</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --walnut:#2b1a10; --oak:#c8925a; --maple:#ecd3a4; --cream:#fff3dc;
+  --honey:#f2b544; --brass:#c9a052; --ink:#3a210f; --edge:#8a5a2b;
+  --u:6px; --sw:608px; --sh:1080px; --w:120px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:#120a05;color:var(--cream);font-family:'Nunito',system-ui,sans-serif;overflow:hidden;user-select:none}
+
+/* Escenario vertical 9:16 */
+.stage{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:var(--sw);height:var(--sh);overflow:hidden;
+  background:
+    linear-gradient(90deg,rgba(0,0,0,.4) 0 2px,transparent 2px) 0 0/calc(var(--sw)/4) 100%,
+    repeating-linear-gradient(90deg,rgba(0,0,0,.07) 0 1px,transparent 1px 6px,rgba(255,210,160,.04) 6px 7px,transparent 7px 13px),
+    radial-gradient(ellipse at 50% 35%,#5c3a20 0%,#3a2414 55%,#20130a 100%);
+  box-shadow:inset 0 0 calc(var(--u)*14) rgba(0,0,0,.7)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:10}
+
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:calc(var(--u)*3.4);padding:calc(var(--u)*6) calc(var(--u)*5);text-align:center}
+.screen.scroll{overflow-y:auto;justify-content:safe center}
+.hidden{display:none!important}
+
+.tag{font-weight:900;font-size:calc(var(--u)*3.3);letter-spacing:.12em;color:var(--honey);text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+
+/* Cartel de madera con el título */
+.sign{position:relative;padding:calc(var(--u)*3) calc(var(--u)*7);border-radius:calc(var(--u)*2);transform:rotate(-1.5deg);max-width:100%;
+  background:repeating-linear-gradient(3deg,rgba(90,50,20,.18) 0 2px,transparent 2px 8px),linear-gradient(180deg,#dcaa6c,#b67b42);
+  border:3px solid #6e4220;
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.3),inset 0 -5px 0 rgba(0,0,0,.2),0 calc(var(--u)*1.3) 0 #4a2a14,0 calc(var(--u)*2.5) calc(var(--u)*4) rgba(0,0,0,.55)}
+.sign::before,.sign::after{content:"";position:absolute;top:50%;width:calc(var(--u)*2.2);height:calc(var(--u)*2.2);margin-top:calc(var(--u)*-1.1);border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#f6e2a8,#b38735 60%,#6b4c15)}
+.sign::before{left:calc(var(--u)*2.2)} .sign::after{right:calc(var(--u)*2.2)}
+h1{font-family:'Alfa Slab One',serif;font-weight:400;font-size:calc(var(--u)*9.5);line-height:1.02;text-transform:uppercase;color:var(--ink);text-shadow:0 2px 0 rgba(255,235,200,.45)}
+
+.prize{font-family:'Alfa Slab One',serif;font-size:calc(var(--u)*5.4);line-height:1.15;color:var(--cream);text-transform:uppercase;text-shadow:0 3px 0 #120a05}
+.range{font-weight:800;font-size:calc(var(--u)*3);letter-spacing:.08em;color:rgba(255,243,220,.7)}
+
+/* Marco y fichas de madera */
+.reels{display:flex;gap:calc(var(--w)*.09);padding:calc(var(--w)*.12);border-radius:calc(var(--u)*3);
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.18) 0 2px,transparent 2px 10px),linear-gradient(180deg,#4a2c17,#2e1b0e);
+  border:calc(var(--u)*.9) solid var(--brass);
+  box-shadow:inset 0 0 calc(var(--u)*4) rgba(0,0,0,.65),0 calc(var(--u)*1.5) calc(var(--u)*4) rgba(0,0,0,.6);transition:border-color .3s,box-shadow .3s}
+.reels.spinning{border-color:var(--honey);box-shadow:inset 0 0 calc(var(--u)*4) rgba(0,0,0,.65),0 0 calc(var(--u)*6) rgba(242,181,68,.55)}
+.reels.win{border-color:#ffd77a;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:inset 0 0 calc(var(--u)*4) rgba(0,0,0,.6),0 0 calc(var(--u)*5) rgba(242,181,68,.55)}50%{box-shadow:inset 0 0 calc(var(--u)*4) rgba(0,0,0,.6),0 0 calc(var(--u)*12) rgba(255,215,122,.95)}}
+
+.digit{width:var(--w);height:calc(var(--w)*1.3);display:flex;align-items:center;justify-content:center;border-radius:calc(var(--w)*.1);overflow:hidden;position:relative;
+  background:repeating-linear-gradient(95deg,rgba(120,70,30,.12) 0 2px,transparent 2px 7px),linear-gradient(180deg,#f3dfb6,#d6ad74);
+  border:3px solid var(--edge);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.45),inset 0 -6px 0 rgba(0,0,0,.18),0 calc(var(--w)*.05) 0 #5a3519;
+  font-family:'Alfa Slab One',serif;font-size:calc(var(--w)*.8);line-height:1;color:var(--ink);text-shadow:0 2px 0 rgba(255,255,255,.4)}
+.digit span{display:block}
+.digit.spin span{animation:roll .1s linear infinite}
+@keyframes roll{0%{transform:translateY(-14%);filter:blur(2.5px);opacity:.7}100%{transform:translateY(14%);filter:blur(2.5px);opacity:.7}}
+.digit.landed{animation:land .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes land{0%{transform:scale(1.22)}100%{transform:scale(1)}}
+.reels.win .digit{background:repeating-linear-gradient(95deg,rgba(140,80,10,.12) 0 2px,transparent 2px 7px),linear-gradient(180deg,#ffe09a,#e9a92f);border-color:#8a5a10}
+
+.status{font-weight:900;font-size:calc(var(--u)*4);letter-spacing:.06em;text-transform:uppercase;color:var(--cream);min-height:1.3em;line-height:1.3;text-shadow:0 2px 0 rgba(0,0,0,.6)}
+.status.slow{animation:blink 1.4s steps(2) infinite}
+.status.hot{color:var(--honey);font-size:calc(var(--u)*4.8)}
+.status.win{font-family:'Alfa Slab One',serif;font-weight:400;font-size:calc(var(--u)*6.2);color:#ffd77a;text-shadow:0 3px 0 #120a05,0 0 calc(var(--u)*4) rgba(242,181,68,.6);animation:glow .9s ease-in-out infinite}
+@keyframes blink{50%{opacity:.35}}
+@keyframes glow{50%{transform:scale(1.05)}}
+
+.btn{font-family:'Alfa Slab One',serif;font-size:calc(var(--u)*5);padding:.6em 1.4em;cursor:pointer;color:var(--ink);
+  background:repeating-linear-gradient(95deg,rgba(120,60,10,.12) 0 2px,transparent 2px 8px),linear-gradient(180deg,#f8c862,#d18f22);
+  border:3px solid #7a4a12;border-radius:calc(var(--u)*2.5);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.4),0 calc(var(--u)*1.3) 0 #5a3519,0 calc(var(--u)*2.4) calc(var(--u)*4) rgba(0,0,0,.5);transition:transform .08s}
+.btn:active{transform:translateY(calc(var(--u)*1))}
+.btn:disabled{opacity:.45;cursor:default}
+
+.history{display:flex;flex-wrap:wrap;gap:calc(var(--u)*1.5);justify-content:center;max-width:100%}
+.chip{font-weight:900;font-size:calc(var(--u)*3.5);padding:.25em .8em;border-radius:999px;color:var(--ink);background:linear-gradient(180deg,#f3dfb6,#d6ad74);border:2px solid var(--edge)}
+.chip small{font-weight:800;font-size:.75em;opacity:.75;margin-left:.4em}
+
+.corner{position:absolute;top:calc(var(--u)*2);right:calc(var(--u)*2);display:flex;gap:calc(var(--u)*1.2);z-index:5;opacity:.4;transition:opacity .2s}
+.corner:hover{opacity:1}
+.icon{width:calc(var(--u)*7);height:calc(var(--u)*7);border-radius:calc(var(--u)*1.5);border:2px solid var(--brass);background:rgba(0,0,0,.4);color:var(--cream);font-size:calc(var(--u)*3.2);cursor:pointer}
+.help{position:absolute;bottom:calc(var(--u)*1.5);left:0;right:0;text-align:center;font-weight:700;font-size:calc(var(--u)*2.2);line-height:1.5;color:rgba(255,243,220,.45);z-index:5;padding:0 calc(var(--u)*3)}
+.clean .corner,.clean .help,body[data-screen=setup] .help{display:none}
+
+/* Configuración */
+.panel{width:100%;display:flex;flex-direction:column;gap:calc(var(--u)*4);text-align:left;padding:calc(var(--u)*5);border-radius:calc(var(--u)*3);
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.15) 0 2px,transparent 2px 11px),linear-gradient(180deg,#4f3019,#352011);
+  border:calc(var(--u)*.6) solid var(--brass);box-shadow:0 calc(var(--u)*2) calc(var(--u)*5) rgba(0,0,0,.6)}
+.lbl{display:block;margin-bottom:calc(var(--u)*1.6);font-weight:900;font-size:calc(var(--u)*3);letter-spacing:.06em;text-transform:uppercase;color:var(--honey)}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:calc(var(--u)*2)}
+.seg button{font-family:'Alfa Slab One',serif;font-size:calc(var(--u)*6.5);padding:calc(var(--u)*1.6) 0;cursor:pointer;color:var(--ink);border-radius:calc(var(--u)*2);
+  background:repeating-linear-gradient(95deg,rgba(120,70,30,.12) 0 2px,transparent 2px 7px),linear-gradient(180deg,#f3dfb6,#d6ad74);
+  border:3px solid var(--edge);box-shadow:0 calc(var(--u)*.9) 0 #5a3519}
+.seg button small{display:block;font-family:'Nunito',sans-serif;font-weight:800;font-size:calc(var(--u)*2.4);opacity:.75;margin-top:calc(var(--u)*.4)}
+.seg button.on{background:linear-gradient(180deg,#ffe09a,#e9a92f);border-color:#7a4a12;outline:3px solid var(--cream);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*2.5)}
+.hint{font-weight:700;font-size:calc(var(--u)*2.6);color:rgba(255,243,220,.6);margin-top:calc(var(--u)*.8)}
+input[type=text],input[type=number]{width:100%;font-family:'Nunito',sans-serif;font-weight:800;font-size:calc(var(--u)*4.2);padding:calc(var(--u)*1.8) calc(var(--u)*2.4);
+  border-radius:calc(var(--u)*1.6);border:3px solid var(--edge);background:var(--cream);color:var(--ink);outline:none}
+input:focus{border-color:var(--honey);box-shadow:0 0 0 3px rgba(242,181,68,.4)}
+.check{display:flex;align-items:center;gap:calc(var(--u)*2);font-weight:800;font-size:calc(var(--u)*3.3);cursor:pointer}
+.check input{width:calc(var(--u)*4);height:calc(var(--u)*4);accent-color:var(--honey)}
+.err{font-weight:800;font-size:calc(var(--u)*3);color:#ffab94;min-height:1.2em}
+.center{display:flex;justify-content:center}
+</style>
+</head>
+<body data-screen="setup">
+<canvas id="fx"></canvas>
+
+<div class="stage" id="stage">
+
+  <!-- PANTALLA 1: CONFIGURACIÓN -->
+  <section id="setup" class="screen scroll">
+    <div class="tag">🤖 A beneficio de Robótica 🤖</div>
+    <div class="sign"><h1>Configurar sorteo</h1></div>
+    <div class="panel">
+      <div>
+        <span class="lbl">1. ¿Cuántas cifras?</span>
+        <div class="seg" id="seg">
+          <button data-d="2">2<small>00 – 99</small></button>
+          <button data-d="3">3<small>000 – 999</small></button>
+          <button data-d="4">4<small>0000 – 9999</small></button>
+        </div>
+      </div>
+      <div>
+        <span class="lbl">2. Rango de números</span>
+        <div class="row">
+          <div><input type="number" id="from" min="0"><div class="hint">Desde</div></div>
+          <div><input type="number" id="to" min="0"><div class="hint">Hasta</div></div>
+        </div>
+      </div>
+      <div>
+        <span class="lbl">3. Premio (opcional)</span>
+        <input type="text" id="prize" placeholder="Ej: Canasta de productos">
+      </div>
+      <div>
+        <span class="lbl">Título</span>
+        <input type="text" id="title">
+      </div>
+      <label class="check"><input type="checkbox" id="norep"> No repetir números que ya salieron</label>
+      <div class="err" id="err"></div>
+      <div class="center"><button class="btn" id="startBtn">¡Comenzar!</button></div>
+    </div>
+  </section>
+
+  <!-- PANTALLA 2: SORTEO -->
+  <section id="game" class="screen hidden">
+    <div class="tag">🤖 A beneficio de Robótica 🤖</div>
+    <div class="sign"><h1 id="gTitle"></h1></div>
+    <div class="prize" id="gPrize"></div>
+    <div class="reels" id="reels"></div>
+    <div class="range" id="gRange"></div>
+    <div class="status slow" id="status">Presioná espacio para sortear</div>
+    <button class="btn" id="drawBtn">🎲 Sortear</button>
+    <div class="history" id="history"></div>
+  </section>
+
+  <div class="corner">
+    <button class="icon" id="cfgBtn" title="Configurar (C)">⚙</button>
+    <button class="icon" id="muteBtn" title="Sonido (M)">🔊</button>
+    <button class="icon" id="fsBtn" title="Pantalla completa (F)">⛶</button>
+  </div>
+  <div class="help">ESPACIO sortear · C configurar · R borrar ganadores · M sonido · F pantalla completa · H ocultar esto</div>
+</div>
+
+<script>
+const KEY = 'sorteoRobotica_v1';
+const DEF = {d:3, from:0, to:999, prize:'', title:'Gran sorteo', noRep:true, history:[]};
+const $ = id => document.getElementById(id);
+const wait = ms => new Promise(r => setTimeout(r, ms));
+const root = document.documentElement.style;
+
+let state = load();
+let screenName = 'setup';
+let spinning = false;
+let muted = false;
+let selD = state.d;
+let SW = 608, SH = 1080;
+
+function load(){
+  try{ const s = JSON.parse(localStorage.getItem(KEY)); if(s && s.d) return Object.assign({}, DEF, s); }catch(e){}
+  return Object.assign({}, DEF, {history:[]});
+}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+const pad = n => String(n).padStart(state.d, '0');
+
+/* ---------- Formato vertical 9:16 que se adapta a la ventana ---------- */
+function layout(){
+  // Ocupa toda la ventana/pestaña, sea cual sea su tamaño (pensado para el recuadro vertical de OBS)
+  SH = innerHeight;
+  SW = innerWidth;
+  root.setProperty('--sw', SW + 'px');
+  root.setProperty('--sh', SH + 'px');
+  root.setProperty('--u', Math.min(SW / 100, SH / 135) + 'px');
+  sizeReels();
+  resizeCv();
+}
+function sizeReels(){
+  const n = state.d;
+  const byW = (SW * .86) / (n + (n-1)*.09 + .24 + .08);
+  const byH = (SH * .24) / 1.54;
+  root.setProperty('--w', Math.max(30, Math.min(byW, byH)) + 'px');
+}
+
+/* ---------- Azar justo (generador criptográfico, sin sesgo) ---------- */
+function randInt(n){
+  const lim = 4294967296 - (4294967296 % n);
+  const a = new Uint32Array(1);
+  do { crypto.getRandomValues(a); } while (a[0] >= lim);
+  return a[0] % n;
+}
+function pick(){
+  const {from, to, noRep} = state;
+  const count = to - from + 1;
+  if(!noRep) return from + randInt(count);
+  const used = new Set(state.history.map(h => +h.n).filter(x => x >= from && x <= to));
+  if(used.size >= count) return null;
+  if(used.size < count / 2){
+    let r; do { r = from + randInt(count); } while (used.has(r));
+    return r;
+  }
+  const rest = [];
+  for(let x = from; x <= to; x++) if(!used.has(x)) rest.push(x);
+  return rest[randInt(rest.length)];
+}
+
+/* ---------- Sonido tipo madera (generado, sin archivos) ---------- */
+let actx = null;
+function ac(){
+  if(!actx){ try{ actx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+  if(actx && actx.state === 'suspended') actx.resume();
+  return actx;
+}
+function beep(freq, dur, type='sine', vol=.08, when=0){
+  if(muted) return;
+  const a = ac(); if(!a) return;
+  const t = a.currentTime + when;
+  const o = a.createOscillator(), g = a.createGain();
+  o.type = type; o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+}
+const sTick = () => beep(700 + Math.random()*250, .045, 'sine', .07);
+const sStop = () => { beep(150, .25, 'triangle', .16); beep(300, .12, 'sine', .08, .01); };
+function sWin(){
+  [523,659,784,1047].forEach((f,i) => beep(f, .2, 'triangle', .12, i*.12));
+  [523,659,784,1047].forEach(f => beep(f, 1, 'sine', .06, .55));
+}
+
+/* ---------- Confeti ---------- */
+const cv = $('fx'), cx = cv.getContext('2d');
+let parts = [], raf = null;
+function resizeCv(){ const r = devicePixelRatio || 1; cv.width = innerWidth*r; cv.height = innerHeight*r; cx.setTransform(r,0,0,r,0,0); }
+function confetti(){
+  const cols = ['#f2b544','#ffe09a','#ecd3a4','#c8925a','#fff3dc','#8fbf6a'];
+  const b = $('stage').getBoundingClientRect();
+  for(let i = 0; i < 240; i++){
+    const side = i % 2;
+    parts.push({x: side ? b.right + 10 : b.left - 10, y: b.top + b.height*(.45 + Math.random()*.45),
+      vx: (side?-1:1)*(3 + Math.random()*(b.width/70)), vy: -(10 + Math.random()*16),
+      s: 7 + Math.random()*9, r: Math.random()*6.28, vr: (Math.random()-.5)*.35,
+      c: cols[i % cols.length], life: 0});
+  }
+  if(!raf) loop();
+}
+function loop(){
+  cx.clearRect(0, 0, innerWidth, innerHeight);
+  parts = parts.filter(p => p.y < innerHeight + 40 && p.life < 420);
+  for(const p of parts){
+    p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr; p.life++;
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(p.r); cx.fillStyle = p.c;
+    cx.fillRect(-p.s/2, -p.s/4, p.s, p.s/2); cx.restore();
+  }
+  raf = parts.length ? requestAnimationFrame(loop) : null;
+}
+
+/* ---------- Pantalla de configuración ---------- */
+function setSeg(d){
+  selD = d;
+  document.querySelectorAll('#seg button').forEach(b => b.classList.toggle('on', +b.dataset.d === d));
+}
+function fillSetup(){
+  setSeg(state.d);
+  $('from').value = state.from; $('to').value = state.to;
+  $('prize').value = state.prize; $('title').value = state.title;
+  $('norep').checked = state.noRep; $('err').textContent = '';
+}
+document.querySelectorAll('#seg button').forEach(b => b.addEventListener('click', () => {
+  const d = +b.dataset.d; setSeg(d);
+  $('from').value = 0; $('to').value = Math.pow(10, d) - 1;
+}));
+function start(){
+  const d = selD, max = Math.pow(10, d) - 1;
+  const from = parseInt($('from').value, 10), to = parseInt($('to').value, 10);
+  const err = $('err');
+  if(isNaN(from) || isNaN(to)) return err.textContent = 'Completá el rango (desde y hasta).';
+  if(from < 0) return err.textContent = 'El número inicial no puede ser negativo.';
+  if(to > max) return err.textContent = `Con ${d} cifras el máximo es ${max}.`;
+  if(from >= to) return err.textContent = '"Desde" tiene que ser menor que "Hasta".';
+  const changed = d !== state.d || from !== state.from || to !== state.to;
+  if(changed && state.history.length && !confirm('Cambiaste el rango: se borrarán los ganadores anteriores. ¿Continuar?')) return;
+  if(changed) state.history = [];
+  Object.assign(state, {d, from, to, prize: $('prize').value.trim(),
+    title: $('title').value.trim() || 'Gran sorteo', noRep: $('norep').checked});
+  save(); ac(); showGame();
+}
+$('startBtn').addEventListener('click', start);
+document.querySelectorAll('#setup input').forEach(i => i.addEventListener('keydown', e => { if(e.key === 'Enter') start(); }));
+
+/* ---------- Pantalla de sorteo ---------- */
+function setStatus(txt, cls){ const s = $('status'); s.textContent = txt; s.className = 'status ' + (cls || ''); }
+function renderHistory(){
+  const h = $('history'); h.innerHTML = '';
+  state.history.slice(-6).reverse().forEach(w => {
+    const c = document.createElement('div'); c.className = 'chip';
+    c.textContent = '🏆 ' + w.n;
+    if(w.p){ const s = document.createElement('small'); s.textContent = w.p; c.appendChild(s); }
+    h.appendChild(c);
+  });
+}
+function showGame(){
+  screenName = 'game'; document.body.dataset.screen = 'game';
+  $('setup').classList.add('hidden'); $('game').classList.remove('hidden');
+  $('gTitle').textContent = state.title;
+  $('gPrize').textContent = state.prize ? '🎁 ' + state.prize : '';
+  $('gPrize').classList.toggle('hidden', !state.prize);
+  $('gRange').textContent = `Números del ${pad(state.from)} al ${pad(state.to)}`;
+  const r = $('reels'); r.innerHTML = ''; r.className = 'reels';
+  for(let i = 0; i < state.d; i++){
+    const c = document.createElement('div'); c.className = 'digit';
+    const s = document.createElement('span'); s.textContent = '?'; c.appendChild(s); r.appendChild(c);
+  }
+  sizeReels(); renderHistory();
+  setStatus('Presioná espacio para sortear', 'slow');
+  $('drawBtn').textContent = '🎲 Sortear'; $('drawBtn').disabled = false;
+}
+function showSetup(){
+  if(spinning) return;
+  screenName = 'setup'; document.body.dataset.screen = 'setup';
+  $('game').classList.add('hidden'); $('setup').classList.remove('hidden');
+  fillSetup();
+}
+
+async function draw(){
+  if(spinning || screenName !== 'game') return;
+  const win = pick();
+  if(win === null){ setStatus('¡Ya salieron todos los números!', 'hot'); return; }
+  spinning = true;
+  const btn = $('drawBtn'); btn.disabled = true; btn.blur();
+  const reels = $('reels'); reels.className = 'reels spinning';
+  const cells = [...reels.children];
+  const s = pad(win), n = cells.length;
+  const stopped = new Array(n).fill(false);
+  cells.forEach(c => { c.classList.remove('landed'); c.classList.add('spin'); });
+  setStatus('Sorteando...', 'hot');
+
+  const iv = setInterval(() => {
+    cells.forEach((c, i) => { if(!stopped[i]) c.firstChild.textContent = randInt(10); });
+    sTick();
+  }, 75);
+
+  for(let i = 0; i < n; i++){
+    const last = i === n - 1;
+    if(last && n > 1) setStatus('¡¡Última cifra!!', 'hot');
+    await wait(i === 0 ? 1800 : (last ? 2200 : 1000));
+    stopped[i] = true;
+    cells[i].classList.remove('spin');
+    cells[i].firstChild.textContent = s[i];
+    cells[i].classList.add('landed');
+    sStop();
+  }
+  clearInterval(iv);
+
+  state.history.push({n: s, p: state.prize}); save();
+  reels.className = 'reels win';
+  setStatus('¡Ganador: ' + s + '!', 'win');
+  sWin(); confetti(); renderHistory();
+  btn.textContent = '🎲 Sortear otro'; btn.disabled = false;
+  spinning = false;
+}
+$('drawBtn').addEventListener('click', draw);
+
+/* ---------- Controles ---------- */
+function toggleMute(){ muted = !muted; $('muteBtn').textContent = muted ? '🔇' : '🔊'; }
+function toggleFs(){
+  try{ if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen(); }catch(e){}
+}
+function resetHistory(){
+  if(spinning || !state.history.length) return;
+  if(confirm('¿Borrar la lista de ganadores?')){ state.history = []; save(); showGame(); }
+}
+$('cfgBtn').addEventListener('click', showSetup);
+$('muteBtn').addEventListener('click', toggleMute);
+$('fsBtn').addEventListener('click', toggleFs);
+
+addEventListener('keydown', e => {
+  if(e.target.matches('input')) return;
+  const k = e.key.toLowerCase();
+  if(screenName === 'game'){
+    if(k === ' ' || k === 'enter'){ e.preventDefault(); draw(); return; }
+    if(k === 'c' || k === 'escape'){ showSetup(); return; }
+    if(k === 'r'){ resetHistory(); return; }
+  }
+  if(k === 'm') toggleMute();
+  if(k === 'f') toggleFs();
+  if(k === 'h') document.body.classList.toggle('clean');
+});
+addEventListener('resize', layout);
+
+fillSetup(); layout();
+</script>
+</body>
+</html>
